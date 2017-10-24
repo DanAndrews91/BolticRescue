@@ -1,0 +1,150 @@
+void debug() {
+    printf("Servo Calibration Controls:\n");
+    printf("1,2,3 - Position Servo (full left, middle, full right)\n");
+    printf("4,5 - Decrease or Increase range\n");
+    while(1) {                   
+        switch(pc.getc()) {
+            case '1': newPos = 0.1f; break;
+            case '2': newPos = 45.0f; break;
+            case '3': newPos = 90.0f; break;
+            case '4': range += 0.000005; break; 
+            case '5': range -= 0.000005; break; 
+            case '6': enR = !enR; break;
+            case '7': start(); break; 
+            case '8': sweep(); break;
+        }
+        
+        printf("prange = +/-%0.7f\n", range);
+
+//************here debug range of servos - range is the value to be tested*************************
+
+        pwmR.calibrate(range, 90.0);
+        moveR(newPos);
+    }
+}
+
+
+int main() {
+    initLEDs();
+    initServos();
+    
+    start();
+    //debug();
+}
+
+
+
+
+
+
+
+
+#include "mbed.h"
+#include "Servo.h"
+
+
+
+// --- Timing Control ---
+DigitalOut basicStamp2(p14); //tmp pin
+
+
+
+
+
+
+// --- Servo Control ---
+Servo pwmR = Servo(p36); //changed
+DigitalOut enR(p35); //changed
+Servo pwmL = Servo(p34); //changed
+DigitalOut enL(p33); //changed
+
+
+
+
+
+// --- mbed Development Board ---
+DigitalOut l1(LED1);
+DigitalOut l2(LED2);
+DigitalOut l3(LED3);
+DigitalOut l4(LED4);
+Serial pc(USBTX, USBRX);
+
+
+
+
+
+
+
+// --- Variables ---
+float range = 0.000795;
+float currentPos = 0.0f, newPos;
+
+
+
+
+
+
+
+
+
+
+// --- Functions ---
+void toggleL() {
+    enL = !enL;
+}
+
+
+
+
+
+
+
+void toggleR() {
+    enR = !enR;
+}
+
+
+
+
+
+
+
+
+void moveR(float pos) {
+    if (!pos)
+        pos = 0.1;
+    pwmR = pos / 180;
+    toggleR();
+    float seconds = (fabs(currentPos - pos) + 5) * 0.24 / 60;   //motor speed = (0.24 seconds / 60 degrees)
+    //wait(seconds);
+    wait(0.5);
+    toggleR();
+    currentPos = pos;
+}
+
+
+
+
+
+
+
+void initServos() { // init all servo logic to zero and calibrate servos
+    pwmL.calibrate(range, 90.0);
+    pwmR.calibrate(range, 90.0);
+    pwmL = 0.0;
+    pwmR = 0.0; 
+    enL = 0;
+    enR = 0;
+}
+
+
+
+
+
+
+void sweep() {    
+    for (int i = 0; i < 120; i += 5) {
+        //wait(0.5);
+        moveR(i);    
+    }
+}
